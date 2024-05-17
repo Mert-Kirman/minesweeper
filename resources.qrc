@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/images">
+        <file>cell_images/0.png</file>
+        <file>cell_images/1.png</file>
+        <file>cell_images/2.png</file>
+        <file>cell_images/3.png</file>
+        <file>cell_images/4.png</file>
+        <file>cell_images/5.png</file>
+        <file>cell_images/6.png</file>
+        <file>cell_images/7.png</file>
+        <file>cell_images/8.png</file>
+        <file>cell_images/empty.png</file>
+        <file>cell_images/flag.png</file>
+        <file>cell_images/hint.png</file>
+        <file>cell_images/mine.png</file>
+        <file>cell_images/wrong-flag.png</file>
+    </qresource>
+</RCC>
