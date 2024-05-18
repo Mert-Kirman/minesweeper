@@ -2,6 +2,7 @@
 #define MYCELL_H
 
 #include <QPushButton>
+#include <QMouseEvent>
 
 class MyCell : public QPushButton
 {
@@ -9,6 +10,17 @@ class MyCell : public QPushButton
 
 public:
     MyCell(QWidget *parent = 0);
+    bool isRevealed;  // If a cell is revealed, it should be unclickable
+    bool isMine;  // States if a cell contains mine
+    bool isFlagged;
+
+signals:
+    void leftClick();
+    void rightClick();
+
+protected:
+    // When left or right mouse button is clicked, corresponding signal will be sent from the cell object
+    void mousePressEvent(QMouseEvent *event);
 };
 
 #endif // MYCELL_H

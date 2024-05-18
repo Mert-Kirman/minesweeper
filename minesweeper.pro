@@ -11,5 +11,4 @@ HEADERS += \
 
 RESOURCES += \
     images.qrc \
-    resources.qrc \
     resources.qrc
