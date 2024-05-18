@@ -4,6 +4,7 @@ MyCell::MyCell(QWidget *parent) : QPushButton(parent) {
     isRevealed = false;
     isMine = false;
     isFlagged = false;
+    neighborMineCount = -1;
 
     // Set the empty cell icon at start
     QIcon icon(":/images/cell_images/empty.png");

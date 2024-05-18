@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
     QHBoxLayout *hb = new QHBoxLayout;  // Layout for holding score label, restart and hint buttons
 
     // Enter row, column and mine count
-    MyGrid *grid = new MyGrid(20, 20, 10);
+    MyGrid *grid = new MyGrid(20, 20, 20);
 
     QPushButton *restart = new QPushButton("Restart");
     QPushButton *hint = new QPushButton("Hint");
