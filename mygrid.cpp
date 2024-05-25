@@ -50,16 +50,13 @@ void MyGrid::revealCell() {
         // GAME OVER ----> IMPLEMENT THIS METHOD
     }
     else {  // Reveal the mine count surrounding the cell
-        currentCell->isRevealed = true;
-        this->revealedCellCount++;
-        this->scoreLabel->setText("Score: " + QString::number(revealedCellCount));
         this->findNeighborMineCount(currentCell);
 
         // Choose image name according to the neighbor mine count
         QString image_name;
         switch (currentCell->neighborMineCount) {
             case 0:
-                image_name = ":/images/cell_images/0.png";
+                revealEmptyCells(currentCell);
                 break;
             case 1:
                 image_name = ":/images/cell_images/1.png";
@@ -89,13 +86,20 @@ void MyGrid::revealCell() {
                 break;
         }
 
-        QIcon icon(image_name);
-        currentCell->setIcon(icon);
-    }
+        if(currentCell->neighborMineCount > 0) {
+            currentCell->isRevealed = true;
+            this->revealedCellCount++;
 
-    // If a cell is revealed, it cannot be clicked again
-    disconnect(currentCell, &MyCell::leftClick, this, &MyGrid::revealCell);
-    disconnect(currentCell, &MyCell::rightClick, this, &MyGrid::flagCell);
+            QIcon icon(image_name);
+            currentCell->setIcon(icon);
+
+            // If a cell is revealed, it cannot be clicked again
+            disconnect(currentCell, &MyCell::leftClick, this, &MyGrid::revealCell);
+            disconnect(currentCell, &MyCell::rightClick, this, &MyGrid::flagCell);
+        }
+
+        this->scoreLabel->setText("Score: " + QString::number(revealedCellCount));
+    }
 }
 
 void MyGrid::flagCell() {
@@ -205,4 +209,88 @@ void MyGrid::findNeighborMineCount(MyCell *currentCell) {
     }
 
     currentCell->neighborMineCount = mineCount;
+}
+
+void MyGrid::revealEmptyCells(MyCell *currentCell) {
+    // Base case: current cell should be an empty cell
+    findNeighborMineCount(currentCell);
+    if(currentCell->neighborMineCount != 0 || currentCell->isMine || currentCell->isRevealed) {
+        if(currentCell->neighborMineCount != 0 && !currentCell->isMine && !currentCell->isRevealed) {
+            // Reveal this 'border' neighbor cell
+            currentCell->leftClick();
+        }
+        return;
+    }
+
+    // Reveal current cell
+    currentCell->isRevealed = true;
+    this->revealedCellCount++;
+    QString imageName = ":/images/cell_images/0.png";
+    QIcon icon(imageName);
+    currentCell->setIcon(icon);
+    disconnect(currentCell, &MyCell::leftClick, this, &MyGrid::revealCell);
+    disconnect(currentCell, &MyCell::rightClick, this, &MyGrid::flagCell);
+
+    // Look for empty neighbor cells
+    int currentCellId = currentCell->cellId;
+    int currentCellRowIndex = currentCellId / columnCount;
+    int currentCellColumnIndex = currentCellId % columnCount;
+
+    // Directions (Will be used to check boundaries)
+    int up = currentCellRowIndex - 1;
+    int right = currentCellColumnIndex + 1;
+    int down = currentCellRowIndex + 1;
+    int left = currentCellColumnIndex - 1;
+
+    // Indexes(Id) of neighbor cells to check (The following will be used only if the corresponding directions are within row and column boundaries)
+    int upNeighborIndex = currentCellId - this->columnCount;
+    int rightNeighborIndex = currentCellId + 1;
+    int downNeighborIndex = currentCellId + this->columnCount;
+    int leftNeighborIndex = currentCellId - 1;
+    int upRigthNeighborIndex =  upNeighborIndex + 1;
+    int downRightNeighborIndex = downNeighborIndex + 1;
+    int upLeftNeighborIndex = upNeighborIndex - 1;
+    int downLeftNeighborIndex = downNeighborIndex - 1;
+
+    // Check neighbor cells
+    MyCell *neighborCell;
+    if(up >= 0) {
+        neighborCell = qobject_cast<MyCell*>(this->itemAt(upNeighborIndex)->widget());
+        revealEmptyCells(neighborCell);
+    }
+
+    if(right < this->columnCount) {
+        neighborCell = qobject_cast<MyCell*>(this->itemAt(rightNeighborIndex)->widget());
+        revealEmptyCells(neighborCell);
+    }
+
+    if(down < this->rowCount) {
+        neighborCell = qobject_cast<MyCell*>(this->itemAt(downNeighborIndex)->widget());
+        revealEmptyCells(neighborCell);
+    }
+
+    if(left >= 0) {
+        neighborCell = qobject_cast<MyCell*>(this->itemAt(leftNeighborIndex)->widget());
+        revealEmptyCells(neighborCell);
+    }
+
+    if(up >= 0 && right < this->columnCount) {
+        neighborCell = qobject_cast<MyCell*>(this->itemAt(upRigthNeighborIndex)->widget());
+        revealEmptyCells(neighborCell);
+    }
+
+    if(down < this->rowCount && right < this->columnCount) {
+        neighborCell = qobject_cast<MyCell*>(this->itemAt(downRightNeighborIndex)->widget());
+        revealEmptyCells(neighborCell);
+    }
+
+    if(up >= 0 && left >= 0) {
+        neighborCell = qobject_cast<MyCell*>(this->itemAt(upLeftNeighborIndex)->widget());
+        revealEmptyCells(neighborCell);
+    }
+
+    if(down < this->rowCount && left >= 0) {
+        neighborCell = qobject_cast<MyCell*>(this->itemAt(downLeftNeighborIndex)->widget());
+        revealEmptyCells(neighborCell);
+    }
 }

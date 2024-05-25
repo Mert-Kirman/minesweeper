@@ -25,6 +25,8 @@ public slots:
 private:
     // Function that returns the number mines surrounding a specified cell
     void findNeighborMineCount(MyCell *currentCell);
+    // Function that recursively reveals all adjacent empty cells
+    void revealEmptyCells(MyCell *currentCell);
 };
 
 #endif // MYGRID_H
