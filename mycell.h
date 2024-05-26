@@ -15,6 +15,7 @@ public:
     bool isRevealed;  // If a cell is revealed, it should be unclickable
     bool isMine;  // States if a cell contains mine
     bool isFlagged;
+    bool isSimulationMine;  // When trying to find a hint during simulation, check if this cell is marked as a mine or not
 
 signals:
     void leftClick();
