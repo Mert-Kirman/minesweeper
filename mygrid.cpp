@@ -1,3 +1,4 @@
+#include <QMessageBox>
 #include "mygrid.h"
 #include "mycell.h"
 
@@ -7,6 +8,7 @@ MyGrid::MyGrid(const int &rowCount, const int &columnCount, const int &mineCount
 
     this->rowCount = rowCount;
     this->columnCount = columnCount;
+    this->startMineCount = mineCount;
 
     // Create the grid with the specified size
     for(int i = 0; i < rowCount * columnCount; i++) {
@@ -47,7 +49,7 @@ void MyGrid::revealCell() {
 
         QIcon icon(":/images/cell_images/mine.png");
         currentCell->setIcon(icon);
-        // GAME OVER ----> IMPLEMENT THIS METHOD
+        gameLost();
     }
     else {  // Reveal the mine count surrounding the cell
         this->findNeighborMineCount(currentCell);
@@ -99,6 +101,11 @@ void MyGrid::revealCell() {
         }
 
         this->scoreLabel->setText("Score: " + QString::number(revealedCellCount));
+
+        // If all cells are revealed, game is won
+        if(this->revealedCellCount == this->rowCount * this->columnCount - this->startMineCount) {
+            gameWon();
+        }
     }
 }
 
@@ -292,5 +299,86 @@ void MyGrid::revealEmptyCells(MyCell *currentCell) {
     if(down < this->rowCount && left >= 0) {
         neighborCell = qobject_cast<MyCell*>(this->itemAt(downLeftNeighborIndex)->widget());
         revealEmptyCells(neighborCell);
+    }
+}
+
+void MyGrid::gameLost() {
+    QIcon mineIcon(":/images/cell_images/mine.png");
+    QIcon wrongFlag(":/images/cell_images/wrong-flag.png");
+
+    MyCell *cell;
+    for(int i = 0; i < this->rowCount * this->columnCount; i++) {
+        cell = qobject_cast<MyCell*>(this->itemAt(i)->widget());
+
+        // Disconnect cell signals to grid slots
+        disconnect(cell, &MyCell::leftClick, this, &MyGrid::revealCell);
+        disconnect(cell, &MyCell::rightClick, this, &MyGrid::flagCell);
+
+        if(cell->isMine && !cell->isFlagged) {
+            cell->setIcon(mineIcon);
+        }
+        if(!cell->isMine && cell->isFlagged) {
+            cell->setIcon(wrongFlag);
+        }
+    }
+
+    QMessageBox msg;
+    msg.setText("You lose!");
+    msg.exec();
+}
+
+void MyGrid::gameWon() {
+    QIcon mineIcon(":/images/cell_images/mine.png");
+
+    MyCell *cell;
+    for(int i = 0; i < this->rowCount * this->columnCount; i++) {
+        cell = qobject_cast<MyCell*>(this->itemAt(i)->widget());
+
+        // Disconnect cell signals to grid slots
+        disconnect(cell, &MyCell::leftClick, this, &MyGrid::revealCell);
+        disconnect(cell, &MyCell::rightClick, this, &MyGrid::flagCell);
+
+        // Show mines that were not flagged by the player
+        if(cell->isMine && !cell->isFlagged) {
+            cell->setIcon(mineIcon);
+        }
+    }
+
+    QMessageBox msg;
+    msg.setText("You win!");
+    msg.exec();
+}
+
+void MyGrid::restart() {
+    // Set score to zero
+    this->revealedCellCount = 0;
+    this->scoreLabel->setText("Score: " + QString::number(revealedCellCount));
+
+    // Set all cells as unrevealed
+    MyCell *cell;
+    QIcon icon(":/images/cell_images/empty.png");
+    for(int i = 0; i < rowCount * columnCount; i++) {
+        cell = qobject_cast<MyCell*>(this->itemAt(i)->widget());
+        cell->isMine = false;
+        cell->isFlagged = false;
+        cell->isRevealed = false;
+        cell->neighborMineCount = -1;
+        cell->setIcon(icon);
+
+        // Connect cell signals to grid slots
+        connect(cell, &MyCell::leftClick, this, &MyGrid::revealCell);
+        connect(cell, &MyCell::rightClick, this, &MyGrid::flagCell);
+    }
+
+    // Place mines in random cells
+    int currentMineCount = 0;
+    while(currentMineCount != this->startMineCount) {
+        int newMineIndex = rand() % this->count();
+        // Type cast the item to MyCell object in order to be able to reach its members
+        MyCell *cell = qobject_cast<MyCell*>(this->itemAt(newMineIndex)->widget());
+        if(cell->isMine == false) {
+            cell->isMine = true;
+            currentMineCount++;
+        }
     }
 }

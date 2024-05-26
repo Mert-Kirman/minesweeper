@@ -13,9 +13,14 @@ int main(int argc, char *argv[]) {
     QHBoxLayout *hb = new QHBoxLayout;  // Layout for holding score label, restart and hint buttons
 
     // Enter row, column and mine count
-    MyGrid *grid = new MyGrid(20, 20, 50);
+    int rowCount = 10;
+    int columnCount = 10;
+    int mineCount = 2;
+    MyGrid *grid = new MyGrid(rowCount, columnCount, mineCount);
 
     QPushButton *restart = new QPushButton("Restart");
+    QObject::connect(restart, &QPushButton::clicked, grid, &MyGrid::restart);
+
     QPushButton *hint = new QPushButton("Hint");
 
     hb->addWidget(grid->scoreLabel);
