@@ -11,6 +11,7 @@ MyGrid::MyGrid(const int &rowCount, const int &columnCount, const int &mineCount
     this->startMineCount = mineCount;
     this->hintShowed = false;
     this->hintId = -1;
+    this->gameIsLost = false;
 
     // Create the grid with the specified size
     for(int i = 0; i < rowCount * columnCount; i++) {
@@ -319,6 +320,8 @@ void MyGrid::revealEmptyCells(MyCell *currentCell) {
 }
 
 void MyGrid::gameLost() {
+    this->gameIsLost = true;
+
     QIcon mineIcon(":/images/cell_images/mine.png");
     QIcon wrongFlag(":/images/cell_images/wrong-flag.png");
 
@@ -370,6 +373,7 @@ void MyGrid::restart() {
     this->revealedCellCount = 0;
     this->scoreLabel->setText("Score: " + QString::number(revealedCellCount));
     this->hintShowed = false;
+    this->gameIsLost = false;
 
     // Set all cells as unrevealed
     MyCell *cell;
@@ -416,7 +420,7 @@ void MyGrid::showHint() {
     this->hintId = findHint();
 
     // If a hint is found, make it green
-    if(this->hintId != -1) {
+    if(this->hintId != -1 && !this->gameIsLost) {
         MyCell *hintedCell = qobject_cast<MyCell*>(this->itemAt(this->hintId)->widget());
 
         // If this cell was flagged before, make it left clickable again

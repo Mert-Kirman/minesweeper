@@ -42,6 +42,7 @@ private:
     int findHint();
     // Function that returns the count of unrevealed neighbor cells
     int findUnrevealedCellCount(MyCell *currentCell, int operationId);
+    bool gameIsLost;  // Deactivate the hint button
 };
 
 #endif // MYGRID_H
