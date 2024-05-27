@@ -44,6 +44,14 @@ MyGrid::MyGrid(const int &rowCount, const int &columnCount, const int &mineCount
 }
 
 void MyGrid::revealCell() {
+    // After any reveal, the green hint image should disappear
+    if(this->hintShowed) {
+        this->hintShowed = false;
+        MyCell *hintedCell = qobject_cast<MyCell*>(this->itemAt(this->hintId)->widget());
+        QIcon icon(":/images/cell_images/empty.png");
+        hintedCell->setIcon(icon);
+    }
+
     MyCell *currentCell = qobject_cast<MyCell*>(sender());
 
     if(currentCell->isMine) {  // Game over since mine is revealed
@@ -126,6 +134,12 @@ void MyGrid::flagCell() {
         currentCell->setIcon(icon);
     }
     else {
+        // Reset the hint state if the flagged current cell is also the hint that was suggested previously
+        if(currentCell->cellId == this->hintId && this->hintShowed) {
+            this->hintShowed = false;
+            this->hintId = -1;
+        }
+
         currentCell->isFlagged = true;
 
         // If a cell is flagged, it cannot be left clicked
@@ -394,11 +408,6 @@ void MyGrid::showHint() {
         hintedCell->leftClick();
 
         this->hintShowed = false;
-        // // Clear the remnants from previous hint actions
-        // for(int i = 0; i < rowCount * columnCount; i++) {
-        //     MyCell *cell = qobject_cast<MyCell*>(this->itemAt(i)->widget());
-        //     cell->isSimulationMine = false;
-        // }
 
         return;
     }
@@ -409,6 +418,13 @@ void MyGrid::showHint() {
     // If a hint is found, make it green
     if(this->hintId != -1) {
         MyCell *hintedCell = qobject_cast<MyCell*>(this->itemAt(this->hintId)->widget());
+
+        // If this cell was flagged before, make it left clickable again
+        if(hintedCell->isFlagged) {
+            hintedCell->isFlagged = false;
+            connect(hintedCell, &MyCell::leftClick, this, &MyGrid::revealCell);
+        }
+
         QIcon hintIcon(":/images/cell_images/hint.png");
         hintedCell->setIcon(hintIcon);
         this->hintShowed = true;
@@ -450,74 +466,6 @@ int MyGrid::findHint() {
 
         int unrevealedCellCount = findUnrevealedCellCount(currentCell, 0);
         int simulationMineCount = findUnrevealedCellCount(currentCell, 1);
-
-        if(currentCell->neighborMineCount - simulationMineCount == unrevealedCellCount) {
-            // Check neighbor cells
-            MyCell *neighborCell;
-            if(up >= 0) {
-                neighborCell = qobject_cast<MyCell*>(this->itemAt(upNeighborIndex)->widget());
-                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
-                    neighborCell->isSimulationMine = true;
-                    i = 0;
-                }
-            }
-
-            if(right < this->columnCount) {
-                neighborCell = qobject_cast<MyCell*>(this->itemAt(rightNeighborIndex)->widget());
-                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
-                    neighborCell->isSimulationMine = true;
-                    i = 0;
-                }
-            }
-
-            if(down < this->rowCount) {
-                neighborCell = qobject_cast<MyCell*>(this->itemAt(downNeighborIndex)->widget());
-                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
-                    neighborCell->isSimulationMine = true;
-                    i = 0;
-                }
-            }
-
-            if(left >= 0) {
-                neighborCell = qobject_cast<MyCell*>(this->itemAt(leftNeighborIndex)->widget());
-                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
-                    neighborCell->isSimulationMine = true;
-                    i = 0;
-                }
-            }
-
-            if(up >= 0 && right < this->columnCount) {
-                neighborCell = qobject_cast<MyCell*>(this->itemAt(upRigthNeighborIndex)->widget());
-                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
-                    neighborCell->isSimulationMine = true;
-                    i = 0;
-                }
-            }
-
-            if(down < this->rowCount && right < this->columnCount) {
-                neighborCell = qobject_cast<MyCell*>(this->itemAt(downRightNeighborIndex)->widget());
-                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
-                    neighborCell->isSimulationMine = true;
-                    i = 0;
-                }
-            }
-
-            if(up >= 0 && left >= 0) {
-                neighborCell = qobject_cast<MyCell*>(this->itemAt(upLeftNeighborIndex)->widget());
-                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
-                    neighborCell->isSimulationMine = true;
-                    i = 0;
-                }
-            }
-
-            if(down < this->rowCount && left >= 0) {
-                neighborCell = qobject_cast<MyCell*>(this->itemAt(downLeftNeighborIndex)->widget());
-                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
-                    neighborCell->isSimulationMine = true;
-                    i = 0;
-                }
-            }
-        }
 
         // Can suggest at least 1 candidate cell
         if(currentCell->neighborMineCount - simulationMineCount == 0 && unrevealedCellCount - simulationMineCount > 0) {
@@ -580,6 +528,73 @@ int MyGrid::findHint() {
             }
         }
 
+        if(currentCell->neighborMineCount == unrevealedCellCount) {
+            // Check neighbor cells
+            MyCell *neighborCell;
+            if(up >= 0) {
+                neighborCell = qobject_cast<MyCell*>(this->itemAt(upNeighborIndex)->widget());
+                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
+                    neighborCell->isSimulationMine = true;
+                    i = 0;
+                }
+            }
+
+            if(right < this->columnCount) {
+                neighborCell = qobject_cast<MyCell*>(this->itemAt(rightNeighborIndex)->widget());
+                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
+                    neighborCell->isSimulationMine = true;
+                    i = 0;
+                }
+            }
+
+            if(down < this->rowCount) {
+                neighborCell = qobject_cast<MyCell*>(this->itemAt(downNeighborIndex)->widget());
+                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
+                    neighborCell->isSimulationMine = true;
+                    i = 0;
+                }
+            }
+
+            if(left >= 0) {
+                neighborCell = qobject_cast<MyCell*>(this->itemAt(leftNeighborIndex)->widget());
+                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
+                    neighborCell->isSimulationMine = true;
+                    i = 0;
+                }
+            }
+
+            if(up >= 0 && right < this->columnCount) {
+                neighborCell = qobject_cast<MyCell*>(this->itemAt(upRigthNeighborIndex)->widget());
+                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
+                    neighborCell->isSimulationMine = true;
+                    i = 0;
+                }
+            }
+
+            if(down < this->rowCount && right < this->columnCount) {
+                neighborCell = qobject_cast<MyCell*>(this->itemAt(downRightNeighborIndex)->widget());
+                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
+                    neighborCell->isSimulationMine = true;
+                    i = 0;
+                }
+            }
+
+            if(up >= 0 && left >= 0) {
+                neighborCell = qobject_cast<MyCell*>(this->itemAt(upLeftNeighborIndex)->widget());
+                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
+                    neighborCell->isSimulationMine = true;
+                    i = 0;
+                }
+            }
+
+            if(down < this->rowCount && left >= 0) {
+                neighborCell = qobject_cast<MyCell*>(this->itemAt(downLeftNeighborIndex)->widget());
+                if(!neighborCell->isRevealed && !neighborCell->isSimulationMine) {
+                    neighborCell->isSimulationMine = true;
+                    i = 0;
+                }
+            }
+        }
     }
 
     return -1;
